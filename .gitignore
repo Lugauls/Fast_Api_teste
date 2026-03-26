@@ -1,0 +1,26 @@
+# Ambiente virtual
+myenv/
+venv/
+
+# Variáveis de ambiente
+.env
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Banco de dados local
+*.db
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# Sistema
+Thumbs.db
+
+# Alembic cache
+alembic/versions/__pycache__/
