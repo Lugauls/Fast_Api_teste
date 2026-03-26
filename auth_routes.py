@@ -6,11 +6,12 @@ from schemas import UsuarioSchema, LoginSchema
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 def criar_token(id_usuario, duracao_token =  timedelta (minutes=ACCESS_TOKEN_EXPIRE_MINUTE)):
     data_expiracao = datetime.now(timezone.utc) + duracao_token
-    dic_info = {"sub": id_usuario,"exp" : data_expiracao}
+    dic_info = {"sub": str(id_usuario),"exp" : data_expiracao}
     jwt_codificado = jwt.encode(dic_info,SECRET_KEY, ALGORITHM)
     return jwt_codificado 
 
@@ -72,3 +73,15 @@ async def use_refresh_token(usuario: Usuario = Depends(verificar_token)):
     access_token = criar_token(usuario.id)
     return {"access_token" : access_token,
             "token_type": "Bearer"} 
+
+
+@auth_router.post("/login-form")
+async def login_form( dados_formularios:OAuth2PasswordRequestForm = Depends() ,session: Session = Depends(pegar_sessao)):
+    usuario = autenticar_usuario(dados_formularios.username, dados_formularios.password, session)
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Usuário não encontrado ou credenciais inválidas")
+    
+    else:
+        access_token = criar_token(usuario.id)
+        return {"access_token" : access_token,
+                "token_type": "Bearer"} 
