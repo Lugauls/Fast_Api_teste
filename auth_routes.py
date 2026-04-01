@@ -38,8 +38,10 @@ async def home():
 
 
 @auth_router.post("/criar_conta")
-async def criar_conta(usuario_schema:UsuarioSchema  , session: Session = Depends(pegar_sessao)):
+async def criar_conta(usuario_schema:UsuarioSchema  , session: Session = Depends(pegar_sessao), usuario_logado: Usuario = Depends(verificar_token)):
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first()
+    if not usuario_logado.admin:
+        raise HTTPException(status_code=401,detail="Você não está autorizado para criar usuários")
     if usuario:
         #já existe algum usuario come esse email
         raise HTTPException(status_code=400, detail="e-mail já cadastrado")
