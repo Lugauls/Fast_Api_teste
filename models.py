@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils import ChoiceType
 
 #criar o banco
@@ -26,6 +26,8 @@ class Usuario(base):
         self.ativo = ativo
         self.admin = admin
 
+      
+
 
 class Pedido(base):
     __tablename__ = "pedidos"
@@ -40,11 +42,17 @@ class Pedido(base):
     status = Column("status", String)
     usuario = Column("usuario",ForeignKey("usuarios.id"))
     preco = Column("preco", Integer)
+    itens = relationship("ItensPedido", cascade="all,delete")
     
     def __init__(self,usuario, status="PENDENTE", preco = 0):
         self.status = status
         self.usuario = usuario
         self.preco = preco
+
+    def calcular_preco(self):
+        #percorrer todos os itens,somar e editar o preço do pedido
+        self.preco= sum(item.valor_unitario * item.quantidade for item in self.itens )
+         
         
 
 class ItensPedido(base):
@@ -64,4 +72,10 @@ class ItensPedido(base):
         self.valor_unitario = valor_unitario
         self.pedido = pedido
 
+
+#migration usando alembic:
+#alembic revision --autogenerate -m "altercao feita"
+
+#executar a migracao:
+#alembic upgrade head
    
