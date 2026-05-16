@@ -66,5 +66,41 @@ async def adicionar_item_pedido(id_pedido : int, item_pedido_schema: ItemPedidoS
     return{
         "mensagem" : "item criado com sucesso",
         "item_pedido" : item_pedido.id,
-        "preco_pedido" : pedido.preco
+        "preco_pedido" : pedido.preco,
+        "resumo do pedido" : pedido
+
+    }
+
+@order_router.post("/pedidos/remover-item/{id_pedido}")
+async def remover_item_pedido(id_item_pedido : int, item_pedido_schema: ItemPedidoSchema,session :Session = Depends(pegar_sessao), usuario: Usuario = Depends(verificar_token) ) :
+    item_pedido = session.query(ItensPedido).filter(ItensPedido.id== id_item_pedido).first()
+    pedido = session.query(Pedido).filter(Pedido.id == item_pedido.pedido).first()
+    if not item_pedido: 
+        raise HTTPException(status_code=400, detail = "item no pedido não existente")
+    
+    if not usuario.admin and usuario.id != pedido.usuario:
+        raise HTTPException(status_code=401, detail="Você não tem autorização para essa modificação")
+    
+    session.delete(item_pedido)
+    session.flush()  
+    pedido.calcular_preco()  
+    return{
+        "mensagem" : "item removido com sucesso",
+        "preco_pedido" : pedido.preco,
+        "resumo do pedido" : pedido
+    }
+
+@order_router.post("/pedidos/finalizar/{id_pedido}")
+async def finalizar_pedido(id_pedido : int, session :Session = Depends(pegar_sessao), usuario: Usuario = Depends(verificar_token) ) :
+    pedido = session.query(Pedido).filter(Pedido.id== id_pedido).first()
+    if not pedido: 
+        raise HTTPException(status_code=400, detail = "pedido não existente")
+    
+    if not usuario.admin and usuario.id != pedido.usuario:
+        raise HTTPException(status_code=401, detail="Você não tem autorização para essa modificação")
+    
+    pedido.status = "FINALIZADO"
+    session.commit()
+    return{
+        "mensagem" : f"pedido número: {pedido.id} finalizado com sucesso",
     }
